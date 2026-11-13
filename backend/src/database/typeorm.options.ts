@@ -1,10 +1,12 @@
 import type { DataSourceOptions } from 'typeorm';
 import type { AppConfig } from '../config/configuration.js';
+import { migrations } from './migrations/index.js';
 
 /**
- * Single source of truth for the TypeORM connection, shared by the Nest
- * application and the TypeORM CLI (migrations).
+ * Connection options shared by the Nest application and the TypeORM CLI.
  * `synchronize` is always off: schema changes go through migrations.
+ * Entities are registered by the Nest app through `autoLoadEntities`
+ * and by the CLI through a glob (see data-source.ts).
  */
 export const buildTypeOrmOptions = (
   database: AppConfig['database'],
@@ -17,6 +19,5 @@ export const buildTypeOrmOptions = (
   database: database.name,
   synchronize: false,
   migrationsRun: false,
-  entities: [`${import.meta.dirname}/../**/*.entity.{ts,js}`],
-  migrations: [`${import.meta.dirname}/migrations/*.{ts,js}`],
+  migrations,
 });

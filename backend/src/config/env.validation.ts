@@ -1,8 +1,10 @@
 import { plainToInstance, Type } from 'class-transformer';
 import {
+  IsEmail,
   IsEnum,
   IsInt,
   IsNotEmpty,
+  IsOptional,
   IsString,
   Max,
   Min,
@@ -67,6 +69,16 @@ export class EnvironmentVariables {
   @IsString()
   @IsNotEmpty()
   CORS_ORIGIN: string;
+
+  // Only read by the seed:admin script.
+  @IsOptional()
+  @IsEmail()
+  ADMIN_EMAIL?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(10)
+  ADMIN_PASSWORD?: string;
 }
 
 /**
