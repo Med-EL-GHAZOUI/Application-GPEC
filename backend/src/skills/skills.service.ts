@@ -14,6 +14,7 @@ import {
   paginate,
   toLikePattern,
 } from '../common/pagination/paginate.js';
+import { EmployeeSkill } from '../employee-skills/entities/employee-skill.entity.js';
 import { PositionSkill } from '../positions/entities/position-skill.entity.js';
 import {
   type CreateSkillDto,
@@ -29,6 +30,8 @@ export class SkillsService {
     @InjectRepository(Skill) private readonly skills: Repository<Skill>,
     @InjectRepository(PositionSkill)
     private readonly positionSkills: Repository<PositionSkill>,
+    @InjectRepository(EmployeeSkill)
+    private readonly employeeSkills: Repository<EmployeeSkill>,
   ) {}
 
   findAll(query: SkillQueryDto): Promise<Page<Skill>> {
@@ -94,20 +97,35 @@ export class SkillsService {
     }
   }
 
-  /** The maximum level cannot drop below a level a position already requires. */
+  /**
+   * The maximum level cannot drop below a level that a position already
+   * requires or that an employee already holds.
+   */
   private async assertMaxLevelCoversRequirements(
     skillId: string,
     maxLevel: number,
   ): Promise<void> {
-    const highestRequired = await this.positionSkills
-      .createQueryBuilder('ps')
-      .select('MAX(ps.requiredLevel)', 'max')
-      .where('ps.skillId = :skillId', { skillId })
-      .getRawOne<{ max: number | null }>();
+    const [highestRequired, highestHeld] = await Promise.all([
+      this.positionSkills
+        .createQueryBuilder('ps')
+        .select('MAX(ps.requiredLevel)', 'max')
+        .where('ps.skillId = :skillId', { skillId })
+        .getRawOne<{ max: number | null }>(),
+      this.employeeSkills
+        .createQueryBuilder('es')
+        .select('MAX(es.level)', 'max')
+        .where('es.skillId = :skillId', { skillId })
+        .getRawOne<{ max: number | null }>(),
+    ]);
 
     if (highestRequired?.max != null && highestRequired.max > maxLevel) {
       throw new ConflictException(
         `A position requires level ${highestRequired.max} of this skill`,
+      );
+    }
+    if (highestHeld?.max != null && highestHeld.max > maxLevel) {
+      throw new ConflictException(
+        `An employee holds level ${highestHeld.max} of this skill`,
       );
     }
   }
@@ -117,7 +135,9 @@ export class SkillsService {
       return new ConflictException('A skill with this name already exists');
     }
     if (isForeignKeyViolation(error)) {
-      return new ConflictException('Skill is still used by positions');
+      return new ConflictException(
+        'Skill is still used by positions, employees or trainings',
+      );
     }
     return error;
   }
