@@ -11,6 +11,7 @@ import { validateEnv } from './config/env.validation.js';
 import { buildTypeOrmOptions } from './database/typeorm.options.js';
 import { DepartmentsModule } from './departments/departments.module.js';
 import { EmployeeSkillsModule } from './employee-skills/employee-skills.module.js';
+import { EvaluationsModule } from './evaluations/evaluations.module.js';
 import { EmployeesModule } from './employees/employees.module.js';
 import { HealthModule } from './health/health.module.js';
 import { PositionsModule } from './positions/positions.module.js';
@@ -44,6 +45,7 @@ import { UsersModule } from './users/users.module.js';
     SkillsModule,
     PositionsModule,
     EmployeesModule,
+    EvaluationsModule,
     EmployeeSkillsModule,
     HealthModule,
   ],
