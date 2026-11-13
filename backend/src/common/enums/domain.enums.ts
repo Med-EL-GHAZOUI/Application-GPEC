@@ -30,3 +30,18 @@ export enum GapPriority {
   Low = 'LOW',
   None = 'NONE',
 }
+
+export enum TrainingStatus {
+  Planned = 'PLANNED',
+  Open = 'OPEN',
+  InProgress = 'IN_PROGRESS',
+  Completed = 'COMPLETED',
+  Cancelled = 'CANCELLED',
+}
+
+export enum EnrollmentStatus {
+  Enrolled = 'ENROLLED',
+  InProgress = 'IN_PROGRESS',
+  Completed = 'COMPLETED',
+  Cancelled = 'CANCELLED',
+}

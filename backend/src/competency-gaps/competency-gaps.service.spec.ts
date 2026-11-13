@@ -28,6 +28,7 @@ const build = (
     employee?: object | null;
     requirements?: ReturnType<typeof requirement>[];
     held?: ReturnType<typeof held>[];
+    recommended?: Map<string, object[]>;
   } = {},
 ) => {
   const employee =
@@ -51,13 +52,25 @@ const build = (
     assertCanAccessEmployee: vi.fn().mockResolvedValue(undefined),
   };
 
+  const recommendations = {
+    recommend: vi.fn().mockResolvedValue(options.recommended ?? new Map()),
+  };
+
   const service = new CompetencyGapsService(
     employees as never,
     positionSkills as never,
     employeeSkills as never,
     accessPolicy as never,
+    recommendations as never,
   );
-  return { service, employees, positionSkills, employeeSkills, accessPolicy };
+  return {
+    service,
+    employees,
+    positionSkills,
+    employeeSkills,
+    accessPolicy,
+    recommendations,
+  };
 };
 
 describe('CompetencyGapsService.forEmployee', () => {
@@ -198,5 +211,112 @@ describe('CompetencyGapsService.forEmployee', () => {
       ForbiddenException,
     );
     expect(employees.findOne).not.toHaveBeenCalled();
+  });
+});
+
+const trainingSummary = (title: string) => ({ id: `training-${title}`, title });
+
+describe('CompetencyGapsService training recommendations', () => {
+  const requirements = [
+    requirement('Angular', 4),
+    requirement('SQL', 2),
+    requirement('Communication', 3),
+  ];
+  const held = [
+    { skillId: 'skill-Angular', level: 2, evaluatedAt: '2026-02-01' },
+    { skillId: 'skill-SQL', level: 2, evaluatedAt: '2026-02-01' },
+    { skillId: 'skill-Communication', level: 4, evaluatedAt: '2026-02-01' },
+  ];
+
+  it('asks for recommendations only for the skills to develop', async () => {
+    const { service, recommendations } = build({ requirements, held });
+
+    await service.forEmployee(EMPLOYEE_ID, user);
+
+    expect(recommendations.recommend).toHaveBeenCalledWith(
+      EMPLOYEE_ID,
+      [{ skillId: 'skill-Angular', currentLevel: 2, requiredLevel: 4 }],
+      1,
+    );
+  });
+
+  it('attaches the best training to each development need, and null elsewhere', async () => {
+    const { service } = build({
+      requirements,
+      held,
+      recommended: new Map([['skill-Angular', [trainingSummary('Advanced')]]]),
+    });
+
+    const { gaps } = await service.forEmployee(EMPLOYEE_ID, user);
+
+    expect(
+      gaps.map((item) => [
+        item.skill.name,
+        item.recommendedTraining?.title ?? null,
+      ]),
+    ).toEqual([
+      ['Angular', 'Advanced'],
+      ['SQL', null],
+      ['Communication', null],
+    ]);
+  });
+
+  it('gives null when no training suits a development need', async () => {
+    const { service } = build({
+      requirements,
+      held,
+      recommended: new Map([['skill-Angular', []]]),
+    });
+
+    const { gaps } = await service.forEmployee(EMPLOYEE_ID, user);
+
+    expect(gaps[0].recommendedTraining).toBeNull();
+  });
+
+  it('lists several alternatives per skill to develop, in the dedicated endpoint', async () => {
+    const { service, recommendations } = build({
+      requirements,
+      held,
+      recommended: new Map([
+        [
+          'skill-Angular',
+          [trainingSummary('Advanced'), trainingSummary('Basics')],
+        ],
+      ]),
+    });
+
+    const result = await service.recommendationsForEmployee(EMPLOYEE_ID, user);
+
+    expect(recommendations.recommend).toHaveBeenCalledWith(
+      EMPLOYEE_ID,
+      expect.any(Array),
+      5,
+    );
+    expect(result.recommendations).toHaveLength(1);
+    expect(result.recommendations[0]).toMatchObject({
+      skill: { name: 'Angular' },
+      currentLevel: 2,
+      requiredLevel: 4,
+      gap: 2,
+      priority: GapPriority.Medium,
+    });
+    expect(
+      result.recommendations[0].trainings.map((item) => item.title),
+    ).toEqual(['Advanced', 'Basics']);
+  });
+
+  it('applies the same scope check to the recommendations endpoint', async () => {
+    const { service, accessPolicy, recommendations } = build({
+      requirements,
+      held,
+    });
+    accessPolicy.assertCanAccessEmployee.mockRejectedValue(
+      new ForbiddenException(),
+    );
+
+    await expect(
+      service.recommendationsForEmployee(EMPLOYEE_ID, user),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(recommendations.recommend).not.toHaveBeenCalled();
   });
 });

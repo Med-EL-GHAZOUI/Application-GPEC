@@ -15,6 +15,7 @@ import {
   toLikePattern,
 } from '../common/pagination/paginate.js';
 import { EmployeeSkill } from '../employee-skills/entities/employee-skill.entity.js';
+import { Training } from '../trainings/entities/training.entity.js';
 import { PositionSkill } from '../positions/entities/position-skill.entity.js';
 import {
   type CreateSkillDto,
@@ -32,6 +33,8 @@ export class SkillsService {
     private readonly positionSkills: Repository<PositionSkill>,
     @InjectRepository(EmployeeSkill)
     private readonly employeeSkills: Repository<EmployeeSkill>,
+    @InjectRepository(Training)
+    private readonly trainings: Repository<Training>,
   ) {}
 
   findAll(query: SkillQueryDto): Promise<Page<Skill>> {
@@ -99,13 +102,13 @@ export class SkillsService {
 
   /**
    * The maximum level cannot drop below a level that a position already
-   * requires or that an employee already holds.
+   * requires, that an employee already holds or that a training targets.
    */
   private async assertMaxLevelCoversRequirements(
     skillId: string,
     maxLevel: number,
   ): Promise<void> {
-    const [highestRequired, highestHeld] = await Promise.all([
+    const [highestRequired, highestHeld, highestTarget] = await Promise.all([
       this.positionSkills
         .createQueryBuilder('ps')
         .select('MAX(ps.requiredLevel)', 'max')
@@ -115,6 +118,11 @@ export class SkillsService {
         .createQueryBuilder('es')
         .select('MAX(es.level)', 'max')
         .where('es.skillId = :skillId', { skillId })
+        .getRawOne<{ max: number | null }>(),
+      this.trainings
+        .createQueryBuilder('training')
+        .select('MAX(training.targetLevel)', 'max')
+        .where('training.skillId = :skillId', { skillId })
         .getRawOne<{ max: number | null }>(),
     ]);
 
@@ -126,6 +134,11 @@ export class SkillsService {
     if (highestHeld?.max != null && highestHeld.max > maxLevel) {
       throw new ConflictException(
         `An employee holds level ${highestHeld.max} of this skill`,
+      );
+    }
+    if (highestTarget?.max != null && highestTarget.max > maxLevel) {
+      throw new ConflictException(
+        `A training targets level ${highestTarget.max} of this skill`,
       );
     }
   }
