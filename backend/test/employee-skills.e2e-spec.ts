@@ -137,7 +137,7 @@ describe('Employee skills (e2e)', () => {
     it('replaces the level instead of duplicating the link', async () => {
       await manager
         .put(skillUrl(reportId))
-        .send({ level: 4, evaluatedAt: '2025-06-01' })
+        .send({ level: 4 }) // same day as the first assessment: the latest one wins
         .expect(200);
 
       const { body } = await hr
@@ -146,7 +146,7 @@ describe('Employee skills (e2e)', () => {
       expect(body).toHaveLength(1);
       expect(body[0]).toMatchObject({
         level: 4,
-        evaluatedAt: '2025-06-01',
+        evaluatedAt: today(),
         comment: null,
       });
     });
