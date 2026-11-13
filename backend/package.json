@@ -26,7 +26,8 @@
     "migration:generate": "npm run typeorm -- migration:generate src/database/migrations/Migration",
     "migration:run": "npm run typeorm -- migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
-    "seed:admin": "nest build && node dist/database/seeds/seed-admin.js"
+    "seed:admin": "nest build && node dist/database/seeds/seed-admin.js",
+    "test:cov:all": "vitest run --config ./vitest.config.cov.ts --coverage"
   },
   "dependencies": {
     "@nestjs/common": "^12.0.1",
