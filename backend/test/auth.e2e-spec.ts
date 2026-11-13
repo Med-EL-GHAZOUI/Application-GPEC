@@ -31,7 +31,9 @@ describe('Authentication and RBAC (e2e)', () => {
   };
 
   const login = (email: string, password = PASSWORD) =>
-    request(app.getHttpServer()).post('/api/auth/login').send({ email, password });
+    request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email, password });
 
   beforeAll(async () => {
     app = await createTestApp();
@@ -144,7 +146,10 @@ describe('Authentication and RBAC (e2e)', () => {
           .send(payload());
 
       const { body } = await send().expect(201);
-      expect(body).toMatchObject({ email: emailOf('created'), role: Role.Manager });
+      expect(body).toMatchObject({
+        email: emailOf('created'),
+        role: Role.Manager,
+      });
       expect(body).not.toHaveProperty('passwordHash');
 
       await send().expect(409);
@@ -226,4 +231,3 @@ describe('Login throttling (e2e)', () => {
     }
   });
 });
-
