@@ -43,6 +43,8 @@ export const asUser = (app: INestApplication, token: string) => {
       request(server).get(`/api${url}`).set('Authorization', auth),
     post: (url: string) =>
       request(server).post(`/api${url}`).set('Authorization', auth),
+    put: (url: string) =>
+      request(server).put(`/api${url}`).set('Authorization', auth),
     patch: (url: string) =>
       request(server).patch(`/api${url}`).set('Authorization', auth),
     delete: (url: string) =>
