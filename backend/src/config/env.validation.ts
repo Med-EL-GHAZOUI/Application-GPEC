@@ -93,7 +93,10 @@ export const validateEnv = (
 
   if (errors.length > 0) {
     const details = errors
-      .map((error) => `${error.property}: ${Object.values(error.constraints ?? {}).join(', ')}`)
+      .map(
+        (error) =>
+          `${error.property}: ${Object.values(error.constraints ?? {}).join(', ')}`,
+      )
       .join('\n');
     throw new Error(`Invalid environment configuration:\n${details}`);
   }

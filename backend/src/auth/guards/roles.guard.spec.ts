@@ -10,9 +10,12 @@ type Metadata = { isPublic?: boolean; roles?: Role[] };
 
 const setup = (metadata: Metadata, userRole?: Role) => {
   const reflector = new Reflector();
-  vi.spyOn(reflector, 'getAllAndOverride').mockImplementation(
-    (key: unknown) =>
-      key === IS_PUBLIC_KEY ? metadata.isPublic : key === ROLES_KEY ? metadata.roles : undefined,
+  vi.spyOn(reflector, 'getAllAndOverride').mockImplementation((key: unknown) =>
+    key === IS_PUBLIC_KEY
+      ? metadata.isPublic
+      : key === ROLES_KEY
+        ? metadata.roles
+        : undefined,
   );
   const context = {
     getHandler: () => undefined,

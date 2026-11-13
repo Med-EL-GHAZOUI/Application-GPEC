@@ -9,7 +9,11 @@ import { RolesGuard } from './auth/guards/roles.guard.js';
 import { configuration, type AppConfig } from './config/configuration.js';
 import { validateEnv } from './config/env.validation.js';
 import { buildTypeOrmOptions } from './database/typeorm.options.js';
+import { DepartmentsModule } from './departments/departments.module.js';
+import { EmployeesModule } from './employees/employees.module.js';
 import { HealthModule } from './health/health.module.js';
+import { PositionsModule } from './positions/positions.module.js';
+import { SkillsModule } from './skills/skills.module.js';
 import { UsersModule } from './users/users.module.js';
 
 @Module({
@@ -35,6 +39,10 @@ import { UsersModule } from './users/users.module.js';
     }),
     UsersModule,
     AuthModule,
+    DepartmentsModule,
+    SkillsModule,
+    PositionsModule,
+    EmployeesModule,
     HealthModule,
   ],
   providers: [

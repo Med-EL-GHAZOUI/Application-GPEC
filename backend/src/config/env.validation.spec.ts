@@ -27,9 +27,9 @@ describe('validateEnv', () => {
   });
 
   it('rejects a JWT secret shorter than 32 characters', () => {
-    expect(() => validateEnv({ ...validEnv, JWT_ACCESS_SECRET: 'short' })).toThrow(
-      /JWT_ACCESS_SECRET/,
-    );
+    expect(() =>
+      validateEnv({ ...validEnv, JWT_ACCESS_SECRET: 'short' }),
+    ).toThrow(/JWT_ACCESS_SECRET/);
   });
 
   it('rejects an invalid NODE_ENV', () => {
