@@ -16,3 +16,17 @@ export enum SkillCategory {
   Technical = 'TECHNICAL',
   Soft = 'SOFT',
 }
+
+/** How an employee level compares with the level required by the position. */
+export enum GapStatus {
+  Mastered = 'MASTERED',
+  ToDevelop = 'TO_DEVELOP',
+  AboveRequirement = 'ABOVE_REQUIREMENT',
+}
+
+export enum GapPriority {
+  High = 'HIGH',
+  Medium = 'MEDIUM',
+  Low = 'LOW',
+  None = 'NONE',
+}
