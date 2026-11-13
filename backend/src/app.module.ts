@@ -9,6 +9,7 @@ import { RolesGuard } from './auth/guards/roles.guard.js';
 import { configuration, type AppConfig } from './config/configuration.js';
 import { validateEnv } from './config/env.validation.js';
 import { buildTypeOrmOptions } from './database/typeorm.options.js';
+import { CompetencyGapsModule } from './competency-gaps/competency-gaps.module.js';
 import { DepartmentsModule } from './departments/departments.module.js';
 import { EmployeeSkillsModule } from './employee-skills/employee-skills.module.js';
 import { EvaluationsModule } from './evaluations/evaluations.module.js';
@@ -47,6 +48,7 @@ import { UsersModule } from './users/users.module.js';
     EmployeesModule,
     EvaluationsModule,
     EmployeeSkillsModule,
+    CompetencyGapsModule,
     HealthModule,
   ],
   providers: [
