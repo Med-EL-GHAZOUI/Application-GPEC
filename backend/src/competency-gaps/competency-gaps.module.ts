@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmployeeSkill } from '../employee-skills/entities/employee-skill.entity.js';
 import { EmployeesModule } from '../employees/employees.module.js';
 import { Employee } from '../employees/entities/employee.entity.js';
+import { TrainingsModule } from '../trainings/trainings.module.js';
 import { PositionSkill } from '../positions/entities/position-skill.entity.js';
 import { CompetencyGapsController } from './competency-gaps.controller.js';
 import { CompetencyGapsService } from './competency-gaps.service.js';
@@ -11,6 +12,7 @@ import { CompetencyGapsService } from './competency-gaps.service.js';
   imports: [
     TypeOrmModule.forFeature([Employee, PositionSkill, EmployeeSkill]),
     EmployeesModule,
+    TrainingsModule,
   ],
   controllers: [CompetencyGapsController],
   providers: [CompetencyGapsService],

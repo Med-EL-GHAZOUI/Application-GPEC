@@ -16,6 +16,7 @@ import { EvaluationsModule } from './evaluations/evaluations.module.js';
 import { EmployeesModule } from './employees/employees.module.js';
 import { HealthModule } from './health/health.module.js';
 import { PositionsModule } from './positions/positions.module.js';
+import { TrainingsModule } from './trainings/trainings.module.js';
 import { SkillsModule } from './skills/skills.module.js';
 import { UsersModule } from './users/users.module.js';
 
@@ -48,6 +49,7 @@ import { UsersModule } from './users/users.module.js';
     EmployeesModule,
     EvaluationsModule,
     EmployeeSkillsModule,
+    TrainingsModule,
     CompetencyGapsModule,
     HealthModule,
   ],

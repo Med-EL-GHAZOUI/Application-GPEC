@@ -4,6 +4,7 @@ import {
   GapStatus,
   SkillCategory,
 } from '../../common/enums/domain.enums.js';
+import { TrainingSummaryDto } from '../../trainings/dto/training-response.dto.js';
 
 class GapSkillDto {
   @ApiProperty({ format: 'uuid' })
@@ -51,6 +52,14 @@ export class SkillGapDto {
     description: 'Date of the latest assessment, null if never assessed',
   })
   evaluatedAt: string | null;
+
+  @ApiProperty({
+    type: TrainingSummaryDto,
+    nullable: true,
+    description:
+      'Best training to close the gap (null when no gap or no suitable training)',
+  })
+  recommendedTraining: TrainingSummaryDto | null;
 }
 
 export class GapSummaryDto {
@@ -105,4 +114,41 @@ export class EmployeeGapsResponseDto {
       'One entry per skill required by the position, largest gap first',
   })
   gaps: SkillGapDto[];
+}
+
+export class SkillRecommendationDto {
+  @ApiProperty({ type: GapSkillDto })
+  skill: GapSkillDto;
+
+  @ApiProperty()
+  currentLevel: number;
+
+  @ApiProperty()
+  requiredLevel: number;
+
+  @ApiProperty()
+  gap: number;
+
+  @ApiProperty({ enum: GapPriority })
+  priority: GapPriority;
+
+  @ApiProperty({
+    type: [TrainingSummaryDto],
+    description: 'Suitable trainings, best first (empty when none)',
+  })
+  trainings: TrainingSummaryDto[];
+}
+
+export class TrainingRecommendationsResponseDto {
+  @ApiProperty({ type: GapEmployeeDto })
+  employee: GapEmployeeDto;
+
+  @ApiProperty({ type: GapPositionDto })
+  position: GapPositionDto;
+
+  @ApiProperty({
+    type: [SkillRecommendationDto],
+    description: 'One entry per skill to develop, largest gap first',
+  })
+  recommendations: SkillRecommendationDto[];
 }

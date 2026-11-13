@@ -6,12 +6,31 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import type { AuthUser } from '../auth/auth-user.type.js';
+import { GapStatus } from '../common/enums/domain.enums.js';
 import { EmployeeSkill } from '../employee-skills/entities/employee-skill.entity.js';
 import { AccessPolicy } from '../employees/access-policy.service.js';
 import { Employee } from '../employees/entities/employee.entity.js';
 import { PositionSkill } from '../positions/entities/position-skill.entity.js';
-import type { EmployeeGapsResponseDto } from './dto/gaps-response.dto.js';
-import { buildSkillGap, sortByUrgency, summarize } from './gap-calculator.js';
+import { TrainingRecommendationsService } from '../trainings/training-recommendations.service.js';
+import type {
+  EmployeeGapsResponseDto,
+  TrainingRecommendationsResponseDto,
+} from './dto/gaps-response.dto.js';
+import {
+  buildSkillGap,
+  sortByUrgency,
+  summarize,
+  type SkillGap,
+} from './gap-calculator.js';
+
+/** How many alternatives the dedicated recommendations endpoint lists per skill. */
+const ALTERNATIVES_PER_SKILL = 5;
+
+type Analysis = {
+  employee: EmployeeGapsResponseDto['employee'];
+  position: EmployeeGapsResponseDto['position'];
+  gaps: SkillGap[];
+};
 
 @Injectable()
 export class CompetencyGapsService {
@@ -23,17 +42,75 @@ export class CompetencyGapsService {
     @InjectRepository(EmployeeSkill)
     private readonly employeeSkills: Repository<EmployeeSkill>,
     private readonly accessPolicy: AccessPolicy,
+    private readonly recommendations: TrainingRecommendationsService,
   ) {}
 
   /**
-   * Compares, for every skill required by the employee's position, the level
-   * the position expects with the employee's current level. Computed on
-   * demand, never stored, so it always reflects the latest assessment.
+   * Gaps of the employee against their position, each development need
+   * carrying the best training to close it. Computed on demand, never stored,
+   * so it always reflects the latest assessment.
    */
   async forEmployee(
     employeeId: string,
     user: AuthUser,
   ): Promise<EmployeeGapsResponseDto> {
+    const { employee, position, gaps } = await this.analyse(employeeId, user);
+    const trainings = await this.recommendations.recommend(
+      employeeId,
+      this.needsOf(gaps),
+      1,
+    );
+
+    return {
+      employee,
+      position,
+      summary: summarize(gaps),
+      gaps: gaps.map((item) => ({
+        ...item,
+        recommendedTraining: trainings.get(item.skill.id)?.[0] ?? null,
+      })),
+    };
+  }
+
+  /** For each development need, the ranked list of trainings that could close it. */
+  async recommendationsForEmployee(
+    employeeId: string,
+    user: AuthUser,
+  ): Promise<TrainingRecommendationsResponseDto> {
+    const { employee, position, gaps } = await this.analyse(employeeId, user);
+    const trainings = await this.recommendations.recommend(
+      employeeId,
+      this.needsOf(gaps),
+      ALTERNATIVES_PER_SKILL,
+    );
+
+    return {
+      employee,
+      position,
+      recommendations: gaps
+        .filter((item) => item.status === GapStatus.ToDevelop)
+        .map((item) => ({
+          skill: item.skill,
+          currentLevel: item.currentLevel,
+          requiredLevel: item.requiredLevel,
+          gap: item.gap,
+          priority: item.priority,
+          trainings: trainings.get(item.skill.id) ?? [],
+        })),
+    };
+  }
+
+  private needsOf(gaps: SkillGap[]) {
+    return gaps
+      .filter((item) => item.status === GapStatus.ToDevelop)
+      .map((item) => ({
+        skillId: item.skill.id,
+        currentLevel: item.currentLevel,
+        requiredLevel: item.requiredLevel,
+      }));
+  }
+
+  private async analyse(employeeId: string, user: AuthUser): Promise<Analysis> {
     // Scope first, so that out-of-scope callers learn nothing about existence.
     await this.accessPolicy.assertCanAccessEmployee(user, employeeId);
 
@@ -83,7 +160,6 @@ export class CompetencyGapsService {
         lastName: employee.lastName,
       },
       position: { id: employee.position.id, title: employee.position.title },
-      summary: summarize(gaps),
       gaps,
     };
   }
