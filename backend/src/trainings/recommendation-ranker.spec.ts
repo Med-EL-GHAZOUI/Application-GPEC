@@ -93,3 +93,26 @@ describe('rankTrainings', () => {
     expect(titles(input)).toEqual(['B', 'A']);
   });
 });
+
+describe('rankTrainings: scheduling order', () => {
+  const need = { currentLevel: 1, requiredLevel: 4 };
+
+  it.each([
+    [
+      'scheduled first in the list',
+      [training('Dated', 4, '2027-01-01'), training('Undated', 4)],
+    ],
+    [
+      'unscheduled first in the list',
+      [training('Undated', 4), training('Dated', 4, '2027-01-01')],
+    ],
+  ])(
+    'puts a scheduled training before an unscheduled one (%s)',
+    (_label, candidates) => {
+      expect(titles(rankTrainings(candidates, need))).toEqual([
+        'Dated',
+        'Undated',
+      ]);
+    },
+  );
+});
